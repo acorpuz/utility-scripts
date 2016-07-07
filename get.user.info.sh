@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script per recuperare gli utenti su un sistema
-# e la data del loro ultimo login
+# e TODO (la data del loro ultimo login)
 #
 # Author: 	Angel Corpuz, adapted from listusers.bash script by
 #			Vivek Gite <www.cyberciti.biz>, under GPL v2.0+
