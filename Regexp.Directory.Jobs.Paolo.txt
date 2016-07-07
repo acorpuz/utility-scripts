@@ -1,0 +1,70 @@
+#Regexp per filtrare le directory di jobs nei webserver
+# Fa schifo ma funziona...
+find ./ -type d -regex './[u][0-9][0-9][0-9][0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]'
+
+
+# trova le directory che hanno il nome nel seguente formato: uNNNNXXXXX
+#	(con N un numero ed X un carattere alfanumerico)
+# Soluzione piu' pulita nel regexp 
+find ./ -type d | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5}
+
+# NOTA: ci potrebbero essere eccezioni al pattern con aggiunto _N (da verificare e filtrare "as needed")
+
+La lista base contiene le seguenti righe:
+[J,j]ob/
+[J,j]obs/
+[T,t]mp/
+[T,t]emp/
+[S,s]rc/
+[L,l]og[s]/
+
+
+
+Implementation
+=================
+1) run regexp on remote machines (in /var/www/) to get list of undesired directories matching pattern
+
+	1.1) as pre-backup script
+	
+	#!/bin/bash
+	# get all job directories matching the uNNNNXXXXX pattern with 
+	# (N=number; X=alfanumeric character) from all servers to be backed up.
+	
+	cd /tmp
+	rm jobs.cassandra.txt jobs.circe.txt
+	ssh -p2014  root@cassandra.med.uniroma1.it 'find /var/www/ -type d | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5}' > jobs.cassandra.txt
+	ssh root@circe.med.uniroma1.it 'find /var/www/ -type d | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5}' > jobs.circe.txt
+	
+2) redirect this list in a file, this file needs to be concatenated with the corresponding files from all machines to build a global ignore list (could have performance problems... if so use specific lists for each machine).
+	2.1) file must be rewritten each time.
+	
+	
+	# Create an ignore list from all these file names and some standard 
+	# directory patterns reading each line in the out file and stripping
+	# the directory path so that only the directory name remains;
+	# append a "/" to mark them as directories.
+	# Ignore list must be called rsnapshot_exclude.list and saved in 
+	# /etc/rsnapshot_exclude.list
+	# First we need to add some standard patterns
+cat << EOF > ./rsnapshot_exclude.list	
+[J,j]ob/
+[J,j]obs/
+[T,t]mp/
+[T,t]emp/
+[S,s]rc/
+EOF
+
+	# Then we add the list of excluded directories
+	for i in cassandra circe
+	do
+		infile="jobs.${i}.txt"
+		while IFS= read -r line
+		do
+		  basename "$line" >> ./rsnapshot_exclude.list
+		done < "$infile"
+	done
+	
+	#Once done we move the file to its destination
+	mv rsnapshot_exclude.list /etc/rsnapshot_exclude.list
+
+3) run rsnapshot using the global ignore file 
