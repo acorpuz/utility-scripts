@@ -62,6 +62,9 @@ if [ $(id -u) -eq 0 ]; then
 	
 	USREXISTS=$(check_user "$USRNAME")
 	if [ "$USREXISTS" == 0 ]; then
+		# find last login time
+		lastlog -u "$USRNAME"
+		
 		# read homedir from passwd
 		HOMEDIR=$(getent passwd "$USRNAME" | cut -d : -f 6)
 		echo "User ${USRNAME} exists, home directory in :${HOMEDIR}"
@@ -88,8 +91,4 @@ else
         echo "must be root"
         exit 0
 fi
-
-
-
-
 
