@@ -3,9 +3,8 @@
 # disable_user.sh
 #
 # ####################################################################
-# Description: 	Disable users that haven't logged in in 1+ year
-# 				Also tar home directory and remove uncompressed dir.
-#
+# Description: 	Disable users; also tar home directory and remove 
+#				uncompressed dir.
 #
 # --------------------------------------------------------------------
 # 2016 Sapienza - department of bioinformatics
@@ -40,7 +39,7 @@ function check_user {
 
 function showuse  {
 	echo -e "Pass an existing username to the script." 
-	echo -e "User will be disabled and homedir tarred and gzipped."
+	echo -e "User will be disabled and home directory tarred and gzipped."
 }
 
 if [ $(id -u) -eq 0 ]; then
@@ -63,8 +62,8 @@ if [ $(id -u) -eq 0 ]; then
 	USREXISTS=$(check_user "$USRNAME")
 	if [ "$USREXISTS" == 0 ]; then
 		# find last login time
-		lastlog -u "$USRNAME"
-		
+		echo "User ${USRNAME} last logged in" $(lastlog -u "${USRNAME}" | tail -n1 | cut -c44-)
+
 		# read homedir from passwd
 		HOMEDIR=$(getent passwd "$USRNAME" | cut -d : -f 6)
 		echo "User ${USRNAME} exists, home directory in :${HOMEDIR}"
@@ -79,6 +78,9 @@ if [ $(id -u) -eq 0 ]; then
 			echo "Archiving home directory in ${ARCHIVENAME} ..."
 
 			tar czf $ARCHIVENAME $HOMEDIR && rm -rf $HOMEDIR
+		else
+			echo "Home directory ${HOMEDIR} not found, exiting..."
+			exit 4
 		fi
 	else
 		echo "User ${USRNAME} does not exist on system."
