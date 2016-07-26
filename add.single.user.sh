@@ -36,7 +36,7 @@ if [ $(id -u) -eq 0 ]; then
 	passwd -e $USRNAME
 	
 	# All done, show details.
-	echo "User $USRNAME added with password $USRPASS."
+	echo "User $USRNAME added with password $USRPASS"
 	
 	exit 0
 else

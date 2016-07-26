@@ -78,6 +78,7 @@ if [ $(id -u) -eq 0 ]; then
 			echo "Archiving home directory in ${ARCHIVENAME} ..."
 
 			tar czf "$ARCHIVENAME" "$HOMEDIR" && rm -rf "$HOMEDIR"
+			chmod 0600 "$ARCHIVENAME"
 		else
 			echo "Home directory ${HOMEDIR} not found, exiting..."
 			exit 4
