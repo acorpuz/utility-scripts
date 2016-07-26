@@ -54,7 +54,7 @@ if [ $(id -u) -eq 0 ]; then
 
 	USRNAME=$1
 	# first check if user exists and is not root, then we do stuff
-	if [ $USRNAME = "root" ]; then
+	if [ "$USRNAME" = "root" ]; then
 		echo 'Cannot disable root account!!'
 		exit 3
 	fi
@@ -62,7 +62,7 @@ if [ $(id -u) -eq 0 ]; then
 	USREXISTS=$(check_user "$USRNAME")
 	if [ "$USREXISTS" == 0 ]; then
 		# find last login time
-		echo "User ${USRNAME} last logged in" $(lastlog -u "${USRNAME}" | tail -n1 | cut -c44-)
+		echo "User ${USRNAME} last logged in" "$(lastlog -u "${USRNAME}" | tail -n1 | cut -c44-)"
 
 		# read homedir from passwd
 		HOMEDIR=$(getent passwd "$USRNAME" | cut -d : -f 6)
@@ -77,7 +77,7 @@ if [ $(id -u) -eq 0 ]; then
 			ARCHIVENAME="${USRNAME}.tar.gz"
 			echo "Archiving home directory in ${ARCHIVENAME} ..."
 
-			tar czf $ARCHIVENAME $HOMEDIR && rm -rf $HOMEDIR
+			tar czf "$ARCHIVENAME" "$HOMEDIR" && rm -rf "$HOMEDIR"
 		else
 			echo "Home directory ${HOMEDIR} not found, exiting..."
 			exit 4
