@@ -25,12 +25,19 @@
 #
 # 2016-07-07  bioadmin  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Activated script
+#
+# 2016-08-02  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Modifided script to change to targer directoory before finding and/or
+#	deleting files.
 # ####################################################################
 
 
 # find and delete files older than 30 days
-find /tmp/ -mtime +30 -delete
-find /mnt/scratch -mtime +30 -delete
+cd /tmp
+find . -mtime +30 -delete
+cd /mnt/scratch/
+find . -mtime +30 -delete
+
 
 # clean-up old jobs...
 outfile=/tmp/dirlist.out
@@ -39,7 +46,8 @@ if [ -e $outfile ]; then
 fi
 # find all webserver job directories older than 60 day and save them to file,
 # we will then use the list to delete them
-find /var/www/ -type d -mtime +60 | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5} > $outfile
+cd /var/www/
+find . -type d -mtime +60 | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5} > $outfile
 
 if [ -e $outfile ]; then
         logfile=/tmp/cleanup.log
