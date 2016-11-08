@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# setup_projects
+#
+# ####################################################################
+# Description: 	Script to set-up the directory structure of projects that
+#				will run on genomeserver (ecuba). 
+#				The script creates the dir structure and USER, assigns 
+#				the target directory as home to USER and set the correct
+#				permissions (2770).
+#
+# --------------------------------------------------------------------
+# 2016 Sapienza - department of bioinformatics
+#
+# Created 08.11.2016 11:14:53 CET
+# ======== Changelog ========
+# 2016-11-08 bioangel <angel<dot>corpuz<dot>jr@gmail<dot>com>
+#
+# *
+#
+#
+#
+# ####################################################################
+
+BASE_PROJECT_PATH="/mnt/projects"
+
+function showuse  {
+	echo "Pass a PROJECT_NAME to the script." 
+	echo "The directory /mnt/projects/PROJECT_NAME will be created as "
+	echo "home directory of the user PROJECT_NAME."
+}
+
+# check for root
+if [ $(id -u) -eq 0 ]; then
+	
+	# We need one parameter, check for it...
+	if [ ! $# -eq 1 ]; then
+		showuse
+		exit 1
+	fi
+	
+	project_name="$1"
+	path_to_project="${BASE_PROJECT_PATH}/${project_name}"
+	
+	
+	
+	# generate a random passwd
+	PASSWD=$(pwgen 4)
+	USRPASS="${USRNAME}_${PASSWD}"
+
+	# add the user
+	CRYPTPASS=$(perl -e 'print crypt($ARGV[0], "password")' $USRPASS)
+	useradd -m -p "$CRYPTPASS" "$USRNAME"
+
+	# expire password
+	passwd -e $USRNAME
+	
+	# All done, show details.
+	echo "User $USRNAME added with password $USRPASS"
+	
+	exit 0
+else
+	echo "Run as root."
+	exit 1
+fi
