@@ -16,14 +16,36 @@
 # * Cleanup of script
 # * Added comments and other checks
 #
-#
+# 2016-11-10  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Added a parameter check, exit if no username is passed. 
 # ####################################################################
 
+function showuse  {
+	echo "Adds a single user to system with a random password."
+	echo "Added user has password set to expire to force a password"
+	echo "change at his first login."
+	echo "Needs pwgen program installed."
+}
+
+# We need one parameter (the username), check for it...
+if [ ! $# -eq 1 ]; then
+	showuse
+	exit 1
+fi
 
 # check for root
 if [ $(id -u) -eq 0 ]; then
+
 	USRNAME=${1}
 	
+	# Check if user exists
+	getent passwd $USRNAME > /dev/null 2&>1
+
+	if [ $? -eq 0 ]; then
+		echo "The user exists."
+		exit 1
+	fi
+
 	# generate a random passwd
 	PASSWD=$(pwgen 4)
 	USRPASS=${USRNAME}"_"${PASSWD}
