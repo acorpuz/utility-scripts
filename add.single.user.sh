@@ -18,6 +18,7 @@
 #
 # 2016-11-10  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Added a parameter check, exit if no username is passed. 
+# * Added check for existing user
 # ####################################################################
 
 function showuse  {
