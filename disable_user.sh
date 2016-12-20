@@ -42,7 +42,7 @@ function showuse  {
 	echo -e "User will be disabled and home directory tarred and gzipped."
 }
 
-if [ $(id -u) -eq 0 ]; then
+if [ "$(id -u)" -eq 0 ]; then
 	CURRDIR=$(pwd)
 	cd /home
 	

@@ -40,7 +40,7 @@ if [ $(id -u) -eq 0 ]; then
 	USRNAME=${1}
 	
 	# Check if user exists
-	getent passwd $USRNAME > /dev/null 2&>1
+	getent passwd $USRNAME > /dev/null
 
 	if [ $? -eq 0 ]; then
 		echo "The user exists."
