@@ -47,10 +47,11 @@ if [ $(id -u) -eq 0 ]; then
 	fi
 	
 	project_name="$1"
-	# remove white space and capitals from project_name
-	project_name="$(echo -e "${project_name,,}" | tr -d '[:space:]')"
-	project_user="$project_name"
-	project_group="$project_name"
+	# remove white space from name
+	project_name="$(echo "${project_name}" | tr -d '[:space:]')"
+	#remove capitals from project_user
+	project_user="$(echo -e "${project_name,,}")"
+	project_group="$project_user"
 	path_to_project="${BASE_PROJECT_PATH}/${project_name}"
 
 	# Check project directory
