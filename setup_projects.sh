@@ -78,7 +78,7 @@ if [ $(id -u) -eq 0 ]; then
 	usrpass="${project_name}_${passwd}"
 	# add the user
 	cryptpass=$(perl -e 'print crypt($ARGV[0], "password")' $usrpass)
-	useradd -d "$path_to_project" -p "$cryptpass" "$project_user"
+	useradd -d "$path_to_project" -g "$project_group" -p "$cryptpass" "$project_user"
 	# expire password
 	passwd -e "$project_user"
 
