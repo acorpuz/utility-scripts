@@ -95,7 +95,9 @@ if [ $(id -u) -eq 0 ]; then
 	echo -e "\t*) Project directory created in ${path_to_project}"
 	echo -e "\t*) User ${project_user} added with password ${usrpass}"
 	echo -e "\t*) Connect to server with:\tssh -p '2015' '"${project_user}"@genomesrv.med.uniroma1.it'"
-	
+	echo -e "\t*) You will be asked to change your password on your first login, \
+			please follo on-screen directions."
+	echo -e "==========================================================="
 	exit 0
 else
 	echo "Run as root."
