@@ -89,7 +89,7 @@ if [ "$(id -u)" -eq 0 ]; then
 					#delete contents of home directory
 					if [ -e "$home_dir" ]; then
 						echo "Clearing home directory ${home_dir} ..."
-						rm -rf "${home_dir}"
+						rm -rf "${home_dir}/*"
 					else
 						echo "Home directory ${home_dir} not found, exiting..."
 						exit 4
