@@ -4,8 +4,22 @@
 #
 # ####################################################################
 # Description: 	Clean-up old (>14 days) pepcomposer jobs. Note that 
-#				there are example dirwectories that must be preserved
+#				there are example directories that must be preserved
 #				(see list at end of script)
+#
+# Tasks:
+#		*)  Check /var/www/pepcomposer/jobs/<job_id>/<job_id.log> for 
+#			job status; if status = finished then last modified date is
+#			when job finished. Use this to make a list of jobs to check.
+#		*)	Run through the list and extract all finished jobs older 	
+#			than 14 days that are not example jobs
+#			[echo ${Array1[@]} ${Array2[@]} | tr ' ' '\n' | sort | uniq -u]
+#		*)	For each job to delete save the following info somewhere:
+#			- job_id and completed date & time
+#			- deletion date
+#			- complete_models directory
+#			- input_parameters.info file
+#
 #
 # --------------------------------------------------------------------
 # 2016 Sapienza - department of bioinformatics
