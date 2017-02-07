@@ -76,7 +76,7 @@ while read l; do
 done <"$outfile"
 
 # clean-up...
-rm "$outfile"
-rm "$logfile"
+rm -f "$outfile"
+rm -f "$logfile"
 
 exit 0
