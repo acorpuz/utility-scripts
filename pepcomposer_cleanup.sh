@@ -112,10 +112,10 @@ if [ "$(id -u)" -eq 0 ]; then
 			for j in ${job_name}/input_parameters.*; do 
 				echo -e "File - $j\n" >> "${temp_job_dir}/Operation.log"
 				echo -e "************************************\n"  >> "${temp_job_dir}/Operation.log"
-				cat "${job_name}/${j}" >> "${temp_job_dir}/Operation.log"
+				cat "${j}" >> "${temp_job_dir}/Operation.log"
 				echo -e "\n************************************\n"  >> "${temp_job_dir}/Operation.log"
 			done	
-			echo -e "================ End log ================" >> "${temp_job_dir}/Operation.log"
+			echo -e "================ End log ================\n" >> "${temp_job_dir}/Operation.log"
 
 			# move needed files to temp dir and archive
 			echo "mv "${job_name}/complete_models" "$temp_job_dir""
