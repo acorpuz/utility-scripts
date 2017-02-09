@@ -92,8 +92,14 @@ if [ "$(id -u)" -eq 0 ]; then
 	# ... do stuff (backup/save files, log jobnames, etc)
 	for i in $final_list; do
 		job_name="$i"
-		# get jobs tatus
-		job_status=$(cat "${job_name}/${job_name}.log")
+		# get jobs status
+		if [ -e "${job_name}/${job_name}.log" ]; then
+			job_status=$(cat "${job_name}/${job_name}.log")
+		else
+			echo "Empty or incomplete job, deleteing"
+			rm -rf "$job_name"
+		fi
+		
 		if [ "$job_status" = "$JOB_STATUS_FINISHED" ]; then
 			## save in tmp dir
 			#	- job_id and completed date & time
@@ -110,7 +116,7 @@ if [ "$(id -u)" -eq 0 ]; then
 			echo -e "=========================================" >> "${temp_job_dir}/Operation.log"
 			echo -e "Job ${job_name} completed on ${job_end_date} with the following parameters:" >> "${temp_job_dir}/Operation.log"
 			for j in ${job_name}/input_parameters.*; do 
-				echo -e "File - $j\n" >> "${temp_job_dir}/Operation.log"
+				echo -e "File - $j" >> "${temp_job_dir}/Operation.log"
 				echo -e "************************************\n"  >> "${temp_job_dir}/Operation.log"
 				cat "${j}" >> "${temp_job_dir}/Operation.log"
 				echo -e "\n************************************\n"  >> "${temp_job_dir}/Operation.log"
