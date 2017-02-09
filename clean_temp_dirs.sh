@@ -29,34 +29,54 @@
 # 2016-08-02  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Modifided script to change to targer directoory before finding and/or
 #	deleting files.
+# 2017-01-26  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Clean up script, minor formatting, delete used files. permission on files 
+#
 # ####################################################################
 
-
-# find and delete files older than 30 days
-cd /tmp
-find . -mtime +30 -delete
-cd /mnt/scratch/
-find . -mtime +30 -delete
-
-
-# clean-up old jobs...
 outfile=/tmp/dirlist.out
-if [ -e $outfile ]; then
-        rm $outfile
-fi
-# find all webserver job directories older than 60 day and save them to file,
-# we will then use the list to delete them
-cd /var/www/
-find . -type d -mtime +60 | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5} > $outfile
+logfile=/tmp/cleanup.log
+days_to_keep_jobs=60
 
-if [ -e $outfile ]; then
-        logfile=/tmp/cleanup.log
-        if [ -e $logfile ]; then
-                rm $logfile
-        fi
-        while read l; do
-                echo "deleting job directory ${l} [last modified $(stat -c %y "${l}")]" >>  $logfile
-                rm -rf "${l}"
-                echo -e "----\n"
-        done <$outfile
+# check for root
+if [ "$EUID" -ne 0 ]; then
+	echo "Run scripts as root."
+	exit 1
 fi
+
+# find and delete files older than 30 days in temp dirs
+for i in "/tmp" "/mnt/scratch" "/var/tmp"; do
+	cd "$i"
+	find . -mtime +30 -delete
+done
+
+# clean-up old jobs and logs...
+for i in "$outfile" "$logfile"; do
+	if [ -e "$i" ]; then
+		rm -f "$i"
+	fi
+	touch "$outfile"
+	chmod 600 "$outfile"
+done
+
+# Find all webserver job directories older than 60 day and save them to file,
+# we will then use the list to delete them.
+# The pattern is not valid for all webservers.
+# TODO: expand to include other job patterns for other webservers ...
+ 
+cd /var/www/
+find . -type d -mtime +${days_to_keep_jobs} | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5} > $outfile
+
+while read l; do
+	if [ -e "$l" ]; then
+		echo "Deleting job directory ${l} [last modified $(stat -c %y "${l}")]" >>  "$logfile"
+		rm -rf "$l"
+		echo -e "----\n"
+	fi
+done <"$outfile"
+
+# clean-up...
+rm -f "$outfile"
+rm -f "$logfile"
+
+exit 0

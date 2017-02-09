@@ -20,6 +20,7 @@
 #   (check_user, check_login, read_home) 
 #
 # ####################################################################
+## TODO: get verificationa answers interactiively
 
 function check_user {
 	# Check if user exists on system; returns 0 if exists, 1 if non exists
@@ -68,30 +69,42 @@ if [ "$(id -u)" -eq 0 ]; then
 		HOMEDIR=$(getent passwd "$USRNAME" | cut -d : -f 6)
 		echo "User ${USRNAME} exists, home directory in :${HOMEDIR}"
 
-		# all set, let's expire, lock and set the shell to a non login shell
-		echo "Locking user ${USRNAME}..."
-		usermod --lock --expiredate 1 -s /bin/false "$USRNAME"
-		
-		# save the homedir, delete it only if tar is successful
-		if [ -e "$HOMEDIR" ]; then
-			ARCHIVENAME="${USRNAME}.tar.gz"
-			echo "Archiving home directory in ${ARCHIVENAME} ..."
+		read -p "Disable account for ${USRNAME} and save and delete contents of ${HOMEDIR}? [y/N]" ans
+		case ${ans} in
+			y|Y )
+				# all set, let's expire, lock and set the shell to a non login shell
+				echo "Locking user ${USRNAME}..."
+				usermod --lock --expiredate 1 -s /bin/false "$USRNAME"
+				echo "Done."
+				
+				# save the homedir, delete it only if tar is successful
+				if [ -e "$HOMEDIR" ]; then
+					ARCHIVENAME="${USRNAME}.tar.gz"
+					echo "Archiving and removing home directory in ${ARCHIVENAME} ..."
 
-			tar czf "$ARCHIVENAME" "$HOMEDIR" && rm -rf "$HOMEDIR"
-			chmod 0600 "$ARCHIVENAME"
-		else
-			echo "Home directory ${HOMEDIR} not found, exiting..."
-			exit 4
-		fi
+					tar czf "$ARCHIVENAME" "$HOMEDIR" && rm -rf "$HOMEDIR"
+					chmod 0600 "$ARCHIVENAME"
+					
+					echo "Done."
+				else
+					echo "Home directory ${HOMEDIR} not found, exiting..."
+					exit 4
+				fi
+			;;
+			* )
+				echo "Account for ${USRNAME} left untouched."
+			;;
+		esac
+
 	else
 		echo "User ${USRNAME} does not exist on system."
 		exit 2
 	fi
     
     cd "$CURRDIR"
-
+	exit 0
 else
         echo "must be root"
-        exit 0
+        exit 1
 fi
 
