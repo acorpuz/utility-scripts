@@ -21,6 +21,7 @@
 #			- input_parameters.info file
 #
 # TODO: what happens when script status is not finished?
+# TODO: what happens to other files (.zip files, .pdb files)?
 # --------------------------------------------------------------------
 # 2016 Sapienza - department of bioinformatics
 #
@@ -99,8 +100,9 @@ if [ "$(id -u)" -eq 0 ]; then
 		if [ -e "${job_name}/${job_name}.log" ]; then
 			job_status=$(cat "${job_name}/${job_name}.log")
 		else
-			echo "Empty or incomplete job, deleteing"
+			echo "Empty or incomplete job, deleting"
 			rm -rf "$job_name"
+			job_status=""
 		fi
 		
 		if [ "$job_status" = "$JOB_STATUS_FINISHED" ]; then
