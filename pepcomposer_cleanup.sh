@@ -20,7 +20,7 @@
 #			- complete_models directory
 #			- input_parameters.info file
 #
-#
+# TODO: what happens when script status is not finished?
 # --------------------------------------------------------------------
 # 2016 Sapienza - department of bioinformatics
 #
@@ -32,6 +32,9 @@
 # 2017-02-09  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Finish script and testing 
 #
+#2017-02-14  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Activated script in crontab
+#	@weekly	/bin/bash /root/Utility-scripts/pepcomposer_cleanup.sh
 # ####################################################################
 
 PEPCOMPOSER_PATH="/var/www/pepcomposer"
@@ -124,17 +127,17 @@ if [ "$(id -u)" -eq 0 ]; then
 			echo -e "================ End log ================\n" >> "${temp_job_dir}/Operation.log"
 
 			# move needed files to temp dir and archive
-			echo "mv "${job_name}/complete_models" "$temp_job_dir""
-			echo "mv "${job_name}/input_parameters.*" "$temp_job_dir""
-			echo "tar czf "${job_name}.tar.gz" "$temp_job_dir""
+			mv "${job_name}/complete_models" "$temp_job_dir"
+			mv "${job_name}/input_parameters.*" "$temp_job_dir"
+			tar czf "${job_name}.tar.gz" "$temp_job_dir"
 
 			# all done!! update global log, move tar to archive dir, delete jobs dir & clean-up
 			cat "${temp_job_dir}/Operation.log" >> "$PEPCOMPOSER_LOG"
-			echo "mv "${job_name}.tar.gz" "$PEPCOMPOSER_JOBS_ARCHIVE_DIR""
+			mv "${job_name}.tar.gz" "$PEPCOMPOSER_JOBS_ARCHIVE_DIR"
+			rm -rf "$job_name"
 			rm -rf "$temp_job_dir"
 		fi
 	done
-
 
 	# all done
 	cd "$old_pwd"
