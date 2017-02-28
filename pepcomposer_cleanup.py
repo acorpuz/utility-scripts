@@ -21,7 +21,7 @@
 #           - input_parameters.info file
 #
 # TODO: what happens when script status is not finished?
-# TODO: what happens to other files (.zip files, .pdb files)?ls /var    www
+# TODO: what happens to other files (.zip files, .pdb files)?
 # --------------------------------------------------------------------
 # 2017 Sapienza - department of bioinformatics
 #
@@ -49,7 +49,7 @@ pepcomposer_path = "/var/www/pepcomposer/"  # check for trailing slash
 if DEBUG_MODE: pepcomposer_path = "tmp_pepcomposer" + pepcomposer_path
 # end delete
 pepcomposer_jobs_dir = os.path.join(pepcomposer_path,"jobs")
-pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_jobs_dir,
+pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_path,
                                             "archived_jobs")
 pepcomposer_log = os.path.join(pepcomposer_jobs_archive_dir,
                                "pepcomposer.log")
@@ -129,7 +129,7 @@ def found_in_examples(job_id):
     return found_job
 
 def check_if_root():
-    user = os. getuid()
+    user = os.getuid()
     if user != 0:
         print "Please run as root,,."
         sys. exit(1) 
