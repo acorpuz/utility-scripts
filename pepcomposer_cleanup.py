@@ -21,7 +21,7 @@
 #           - input_parameters.info file
 #
 # TODO: what happens when script status is not finished?
-# TODO: what happens to other files (.zip files, .pdb files)?
+# TODO: what happens to other files (.zip files, .pdb files)?ls /var    www
 # --------------------------------------------------------------------
 # 2017 Sapienza - department of bioinformatics
 #
@@ -30,6 +30,10 @@
 # ======== Changelog ========
 # 2017-02-16  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Script re-written in python
+#
+# 2017-02-28  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Final script, needs to be debugged on production server
+#
 # ######################################################################
 import os
 import shutil
@@ -37,19 +41,20 @@ import sys
 import time
 import logging
 
-logging.warning
 DEBUG_MODE = True
 # DEBUG_MODE = False
 
 pepcomposer_path = "/var/www/pepcomposer/"  # check for trailing slash
-if DEBUG_MODE:
-    pepcomposer_path = "tmp_pepcomposer" + pepcomposer_path
+# delete this on production machine, nedded only fo local testing
+if DEBUG_MODE: pepcomposer_path = "tmp_pepcomposer" + pepcomposer_path
+# end delete
 pepcomposer_jobs_dir = os.path.join(pepcomposer_path,"jobs")
 pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_jobs_dir,
                                             "archived_jobs")
 pepcomposer_log = os.path.join(pepcomposer_jobs_archive_dir,
                                "pepcomposer.log")
 time_period = 14  # in days
+date_format_string = "%Y_%m_%d-%H:%M:%S"
 JOB_STATUS_FINISHED = "finished"
 
 jobs_path_check_ok = False
@@ -159,8 +164,7 @@ if DEBUG_MODE:
     print "pepcomposer path exists:" + str(path_check_ok)
     print "pepcomposer_jobs_dir = " + pepcomposer_jobs_dir
     print "pepcomposer jobs path exists:" + str(jobs_path_check_ok)
-    print "pepcomposer_jobs_archive_dir = " + 
-            pepcomposer_jobs_archive_dir
+    print "pepcomposer_jobs_archive_dir = " + pepcomposer_jobs_archive_dir
     print "pepcomposer_log = " + pepcomposer_log
     print "time_period = " + str(time_period) + " (days)"
     print "JOB_STATUS_FINISHED = " + JOB_STATUS_FINISHED
@@ -170,10 +174,8 @@ if DEBUG_MODE:
     
     not_sample = "NOT A SAMPLE JOB"
     is_sample = "4ds1_61_8_56f57d702ccc5"
-    print "Is " + not_sample + " an example? " 
-            + str(found_in_examples (not_sample))
-    print "Is " + is_sample + " an example? " 
-            + str(found_in_examples (is_sample))
+    print "Is " + not_sample + " an example? " + str(found_in_examples (not_sample))
+    print "Is " + is_sample + " an example? " + str(found_in_examples (is_sample))
     print ("\n*********** End Tests ***********\n")
     
 if path_check_ok:
@@ -182,6 +184,14 @@ if path_check_ok:
     num_days = 86400 * time_period  # in seconds
     now = time.time()               # in seconds
 
+    # set up logging
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)8s %(message))',
+                        filename=pepcomposer_log,
+                        datefmt=date_format_string,
+                        filemode='w')
+    global_log = logging.getLogger('Global Log')
+    logging.getLogger('').addHandler(global_log)
     for root, dirs, files in os.walk(pepcomposer_jobs_dir): 
         # find all jobs in job dir older than "num_days" period days
         for directory in dirs:
@@ -200,35 +210,51 @@ if path_check_ok:
                     # read job_name.log to check for job status
                     log_file=os.path.join(job_path,job_name + ".log")
                     if os.file.exists(log_file):
-                        fo = open (log_file,r)
-                        job_status = fo.readline()
-                        fo.close () 
-
+                        with open (log_file,r) as fo:
+                            job_status = fo.readline()
+                        
                         if job_status == JOB_STATUS_FINISHED:
-                            temp_job_dir = os.path.join(
-                                                pepcomposer_jobs_dir,
-                                                job_name + "_tmp")
-                            curr_date = time.strftime(
-                                                "%Y_%m_%d-%H:%M:%S")
+                            temp_job_dir = os.path.join(pepcomposer_jobs_dir,
+                                                        job_name + "_tmp")
+                            job_log = os.path.join(temp_job_dir, "operations.log")
+                            curr_date = time.strftime(date_format_string)
                             job_end_date = os.path.getmtime(job_path)
                             # log deletion date (curr_date)
                             # TODO: write log file
+                            logging.basicConfig(level=logging.INFO,
+                                                format='%(asctime)8s %(message))',
+                                                filename=job_log,
+                                                datefmt=date_format_string,
+                                                filemode='w')
+                            single_job_log = logging.getLogger(job_name)
+                            logging.getLogger('').addHandler(single_job_log)
+                            logging.info("Archiving job %s on %s", job_name, curr_date)
+                            logging.info("="*40)
+                            logging.info("Job completed on %s with the following parameters:", job_end_date)
                             if not os.path.exists(temp_job_dir):
                                 os.makedir(temp_job_dir)
                             # save complete model directory
                             # and input_parameters files
                             for obj in need_to_save_list:
-                                target = os.path.join(job_path, obj)
-                                shutil.copy2(target, temp_job_dir)
-
+                                if os.path.exists(obj):
+                                    target = os.path.join(job_path, obj)
+                                    shutil.copy2(target, temp_job_dir)
+                                    read_data=""
+                                    with open(target,r) as f:
+                                        read_data=f.read()
+                                    logging.info("File - %s", obj)
+                                    logging.info("*"*40)
+                                    logging.info(read_data)
+                                    logging.info("*"*40)
+                                
                             if not DEBUG_MODE:
                                 # tar.gz everything
                                 shutil.make_archive(archive_path,
                                                     "gztar", temp_job_dir)
-
                                 # delete job and clean-up
                                 shutil.rmtree(job_path)
                                 shutil.rmtree(temp_job_dir)
+                            logging.getLogger('').removeHandler(single_job_log)
                     else:
                         print "Empty or incomplete job, deleting"
                         if not DEBUG_MODE:
@@ -236,6 +262,9 @@ if path_check_ok:
                 else:
                     # if sample JOB --> do nothing
                     print "Skipping example job " + job_name
+    # all done, close logging objects and exit
+    logging.shutdown()
+    sys.exit(0)
 
 else:
     if not path_check_ok:
