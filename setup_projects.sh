@@ -38,7 +38,7 @@ function showuse  {
 }
 
 # check for root
-if [ $(id -u) -eq 0 ]; then
+if [ "$(id -u)" -eq 0 ]; then
 	
 	# We need one parameter, check for it...
 	if [ ! $# -eq 1 ]; then
@@ -60,7 +60,7 @@ if [ $(id -u) -eq 0 ]; then
 		exit 1
 	fi
 	# Check project group
-	if [ $(getent group ${project_group}) ]; then
+	if [ "$(getent group "${project_group}")" ]; then
 		log_warning_msg "${project_group} group exists."
 		exit 1
 	fi
@@ -77,7 +77,7 @@ if [ $(id -u) -eq 0 ]; then
 	passwd=$(pwgen 4)
 	usrpass="${project_name}_${passwd}"
 	# add the user
-	cryptpass=$(perl -e 'print crypt($ARGV[0], "password")' $usrpass)
+	cryptpass=$(perl -e 'print crypt($ARGV[0], "password")' "$usrpass")
 	useradd -d "$path_to_project" -g "$project_group" -p "$cryptpass" "$project_user"
 	# expire password
 	passwd -e "$project_user"
@@ -94,9 +94,9 @@ if [ $(id -u) -eq 0 ]; then
 	echo "Project ${project_name} details:"
 	echo -e "\t*) Project directory created in ${path_to_project}"
 	echo -e "\t*) User ${project_user} added with password ${usrpass}"
-	echo -e "\t*) Connect to server with:\tssh -p '2015' '"${project_user}"@genomesrv.med.uniroma1.it'"
+	echo -e "\t*) Connect to server with:\tssh -p 2015 ${project_user}@genomesrv.med.uniroma1.it"
 	echo -e "\t*) You will be asked to change your password on your first login, \
-			please follo on-screen directions."
+			please follow on-screen directions."
 	echo -e "==========================================================="
 	exit 0
 else

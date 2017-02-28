@@ -88,7 +88,7 @@ if [ "$(id -u)" -eq 0 ]; then
 					usermod --lock --expiredate 1 -s /bin/false "$usr_name"
 					#delete contents of home directory
 					if [ -e "$home_dir" ]; then
-						project_name=$(basename ${home_dir})
+						project_name=$(basename "${home_dir}")
 						echo "Clearing home directory ${home_dir} ..."
 						tar --checkpoint czf "${project_name}.tar.gz" "$home_dir" && rm -rf "${home_dir}*"
 					else

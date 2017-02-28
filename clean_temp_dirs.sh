@@ -75,8 +75,4 @@ while read l; do
 	fi
 done <"$outfile"
 
-# clean-up...
-rm -f "$outfile"
-rm -f "$logfile"
-
 exit 0
