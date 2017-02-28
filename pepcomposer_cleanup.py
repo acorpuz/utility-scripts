@@ -46,7 +46,7 @@ DEBUG_MODE = True
 
 pepcomposer_path = "/var/www/pepcomposer/"  # check for trailing slash
 # delete this on production machine, nedded only fo local testing
-if DEBUG_MODE: pepcomposer_path = "tmp_pepcomposer" + pepcomposer_path
+#if DEBUG_MODE: pepcomposer_path = "tmp_pepcomposer" + pepcomposer_path
 # end delete
 pepcomposer_jobs_dir = os.path.join(pepcomposer_path,"jobs")
 pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_path,
@@ -203,14 +203,15 @@ if path_check_ok:
 
             if now - num_days > last_modified:
                 print "Processing job " + job_name
+                raw_input("Press Enter to continue...")
                 # for each job older than "time_period",
                 # check if it is a sample job
                 job_status = ""
                 if not found_in_examples(job_name):
                     # read job_name.log to check for job status
                     log_file=os.path.join(job_path,job_name + ".log")
-                    if os.file.exists(log_file):
-                        with open (log_file,r) as fo:
+                    if os.path.exists(log_file):
+                        with open (log_file,'r') as fo:
                             job_status = fo.readline()
                         
                         if job_status == JOB_STATUS_FINISHED:
@@ -221,6 +222,9 @@ if path_check_ok:
                             job_end_date = os.path.getmtime(job_path)
                             # log deletion date (curr_date)
                             # TODO: write log file
+                            raw_input("Archiving job name - " +  job_name + " in " + temp_job_dir)
+                            if not os.path.exists(temp_job_dir):
+                                os.makedirs(temp_job_dir)
                             logging.basicConfig(level=logging.INFO,
                                                 format='%(asctime)8s %(message))',
                                                 filename=job_log,
@@ -231,16 +235,18 @@ if path_check_ok:
                             logging.info("Archiving job %s on %s", job_name, curr_date)
                             logging.info("="*40)
                             logging.info("Job completed on %s with the following parameters:", job_end_date)
-                            if not os.path.exists(temp_job_dir):
-                                os.makedir(temp_job_dir)
                             # save complete model directory
                             # and input_parameters files
+                            raw_input("saving objects: " + need_to_save_list)
                             for obj in need_to_save_list:
+                                raw_input("saving object" + obj)
                                 if os.path.exists(obj):
+                                    raw_input(obj + " exists")
                                     target = os.path.join(job_path, obj)
+                                    raw_input("target path:" + target)
                                     shutil.copy2(target, temp_job_dir)
                                     read_data=""
-                                    with open(target,r) as f:
+                                    with open(target,'r') as f:
                                         read_data=f.read()
                                     logging.info("File - %s", obj)
                                     logging.info("*"*40)
