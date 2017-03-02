@@ -35,12 +35,12 @@ if [ ! $# -eq 1 ]; then
 fi
 
 # check for root
-if [ $(id -u) -eq 0 ]; then
+if [ "$(id -u)" -eq 0 ]; then
 
 	USRNAME=${1}
 	
 	# Check if user exists
-	getent passwd $USRNAME > /dev/null
+	getent passwd "$USRNAME" > /dev/null
 
 	if [ $? -eq 0 ]; then
 		echo "The user exists."
@@ -52,14 +52,14 @@ if [ $(id -u) -eq 0 ]; then
 	USRPASS=${USRNAME}"_"${PASSWD}
 
 	# add the user
-	CRYPTPASS=$(perl -e 'print crypt($ARGV[0], "password")' $USRPASS)
+	CRYPTPASS=$(perl -e 'print crypt($ARGV[0], "password")' "$USRPASS")
 	useradd -m -p "$CRYPTPASS" "$USRNAME"
 
 	# expire password
-	passwd -e $USRNAME
+	passwd -e "$USRNAME"
 	
 	# All done, show details.
-	echo "User $USRNAME added with password $USRPASS"
+	echo "User ${USRNAME} added with password ${USRPASS}"
 	
 	exit 0
 else

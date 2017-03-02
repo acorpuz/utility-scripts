@@ -80,9 +80,9 @@ if [ "$(id -u)" -eq 0 ]; then
 				# save the homedir, delete it only if tar is successful
 				if [ -e "$HOMEDIR" ]; then
 					ARCHIVENAME="${USRNAME}.tar.gz"
-					echo "Archiving and removing home directory in ${ARCHIVENAME} ..."
+					echo "Archiving home directory in ${ARCHIVENAME}; home dir will be removed  ..."
 
-					tar czf "$ARCHIVENAME" "$HOMEDIR" && rm -rf "$HOMEDIR"
+					tar czvf "$ARCHIVENAME" "$HOMEDIR" && rm -rf "$HOMEDIR"
 					chmod 0600 "$ARCHIVENAME"
 					
 					echo "Done."
