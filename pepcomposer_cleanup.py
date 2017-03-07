@@ -194,9 +194,9 @@ if path_check_ok:
     logging.getLogger('').addHandler(global_log)
     for dirs in os.listdir(pepcomposer_jobs_dir):
         # find all jobs in job dir older than "num_days" period days
-         job_name = dirs
-         job_path = os.path.join(pepcomposer_jobs_dir, dirs)
-         if os.path.isdir(job_path): 
+        job_name = dirs
+        job_path = os.path.join(pepcomposer_jobs_dir, dirs)
+        if os.path.isdir(job_path): 
             archive_path = os.path.join(pepcomposer_jobs_archive_dir,
                                         job_name + ".tar.gz")
             last_modified = os.path.getctime(job_path)
@@ -263,7 +263,7 @@ if path_check_ok:
                 else:
                     # if sample JOB --> do nothing
                     print "Skipping example job " + job_name
-         else:
+        else:
             print("Skipping file " + job_name)
     # all done, close logging objects and exit
     logging.shutdown()
