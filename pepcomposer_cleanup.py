@@ -41,8 +41,8 @@ import sys
 import time
 import logging
 
-DEBUG_MODE = True
-# DEBUG_MODE = False
+# DEBUG_MODE = True
+DEBUG_MODE = False
 
 pepcomposer_path = "/var/www/pepcomposer/"  # check for trailing slash
 # delete this on production machine, nedded only fo local testing
@@ -192,18 +192,17 @@ if path_check_ok:
                         filemode='w')
     global_log = logging.getLogger('Global Log')
     logging.getLogger('').addHandler(global_log)
-    for root, dirs, files in os.walk(pepcomposer_jobs_dir): 
+    for dirs in os.listdir(pepcomposer_jobs_dir):
         # find all jobs in job dir older than "num_days" period days
-        for directory in dirs:
-            job_name = directory
-            job_path = os.path.join(root,directory)
+         job_name = dirs
+         job_path = os.path.join(pepcomposer_jobs_dir, dirs)
+         if os.path.isdir(job_path): 
             archive_path = os.path.join(pepcomposer_jobs_archive_dir,
                                         job_name + ".tar.gz")
             last_modified = os.path.getctime(job_path)
 
             if now - num_days > last_modified:
                 print "Processing job " + job_name
-                raw_input("Press Enter to continue...")
                 # for each job older than "time_period",
                 # check if it is a sample job
                 job_status = ""
@@ -219,55 +218,53 @@ if path_check_ok:
                                                         job_name + "_tmp")
                             job_log = os.path.join(temp_job_dir, "operations.log")
                             curr_date = time.strftime(date_format_string)
-                            job_end_date = os.path.getmtime(job_path)
-                            # log deletion date (curr_date)
-                            # TODO: write log file
-                            raw_input("Archiving job name - " +  job_name + " in " + temp_job_dir)
-                            if not os.path.exists(temp_job_dir):
-                                os.makedirs(temp_job_dir)
-                            logging.basicConfig(level=logging.INFO,
-                                                format='%(asctime)8s %(message))',
-                                                filename=job_log,
-                                                datefmt=date_format_string,
-                                                filemode='w')
-                            single_job_log = logging.getLogger(job_name)
-                            logging.getLogger('').addHandler(single_job_log)
-                            logging.info("Archiving job %s on %s", job_name, curr_date)
-                            logging.info("="*40)
-                            logging.info("Job completed on %s with the following parameters:", job_end_date)
+                            job_end_date = time.gmtime(os.path.getmtime(job_path))
+                            job_end_date = time.strftime(date_format_string, job_end_date)
+                            # Clear temp dir if exists (failsafe for orl dirs)
+                            if os.path.exists(temp_job_dir):
+                                shutil.rmtree(temp_job_dir)       
+                            os.makedirs(temp_job_dir)
+                            flog = open(job_log, 'w')
+                            flog.write("Archiving job " + job_name + " on " + str(curr_date) + "\n")
+                            flog.write("="*40 + "\n")
+                            flog.write("Job completed on " + job_end_date + "\n")
                             # save complete model directory
                             # and input_parameters files
-                            raw_input("saving objects: " + need_to_save_list)
                             for obj in need_to_save_list:
-                                raw_input("saving object" + obj)
-                                if os.path.exists(obj):
-                                    raw_input(obj + " exists")
-                                    target = os.path.join(job_path, obj)
-                                    raw_input("target path:" + target)
-                                    shutil.copy2(target, temp_job_dir)
-                                    read_data=""
-                                    with open(target,'r') as f:
-                                        read_data=f.read()
-                                    logging.info("File - %s", obj)
-                                    logging.info("*"*40)
-                                    logging.info(read_data)
-                                    logging.info("*"*40)
-                                
+                                target = os.path.join(job_path, obj)
+                                if os.path.exists(target):
+                                    if os.path.isdir(target):
+                                        shutil.copytree(target, os.path.join(temp_job_dir,obj))
+                                        flog.write("Saving " + obj +"\n")
+                                    else:
+                                        shutil.copy2(target, temp_job_dir)
+                                        read_data=""
+                                        with open(target,'r') as f:
+                                            read_data=f.read()
+                                        flog.write("File " + obj + "\n")
+                                        flog.write("*"*40 + "\n")
+                                        flog.write(read_data + "\n")
+                                        flog.write("*"*40 + "\n")
+                            flog.close
                             if not DEBUG_MODE:
                                 # tar.gz everything
                                 shutil.make_archive(archive_path,
                                                     "gztar", temp_job_dir)
                                 # delete job and clean-up
-                                shutil.rmtree(job_path)
+                                with open(log_file,'r') as f:
+                                    read_log=f.read()
+                                logging.info(read_log)         
+                                # shutil.rmtree(job_path)
                                 shutil.rmtree(temp_job_dir)
-                            logging.getLogger('').removeHandler(single_job_log)
                     else:
                         print "Empty or incomplete job, deleting"
                         if not DEBUG_MODE:
-                                shutil.rmtree(job_path)
+                            #shutil.rmtree(job_path)
                 else:
                     # if sample JOB --> do nothing
                     print "Skipping example job " + job_name
+         else:
+            print("Skipping file " + job_name)
     # all done, close logging objects and exit
     logging.shutdown()
     sys.exit(0)
