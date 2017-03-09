@@ -131,7 +131,7 @@ def found_in_examples(job_id):
 def check_if_root():
     user = os.getuid()
     if user != 0:
-        print "Please run as root,,."
+        print "Please run as root..."
         sys. exit(1) 
 
 # checking root status, but only if not debugging
@@ -259,6 +259,7 @@ if path_check_ok:
                     else:
                         print "Empty or incomplete job, deleting"
                         if not DEBUG_MODE:
+                            print "Deleting job " + job_path
                             #shutil.rmtree(job_path)
                 else:
                     # if sample JOB --> do nothing
