@@ -21,7 +21,6 @@
 #           - input_parameters.info file
 #
 # TODO: what happens when script status is not finished?
-# TODO: what happens to other files (.zip files, .pdb files)?
 # --------------------------------------------------------------------
 # 2017 Sapienza - department of bioinformatics
 #
@@ -34,13 +33,16 @@
 # 2017-02-28  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Final script, needs to be debugged on production server
 #
+#  2017-03-09  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Added skipping files to script. Activated all parts.
+#
 # ######################################################################
 import os
 import shutil
 import sys
 import time
 import logging
-
+import fileinput
 # DEBUG_MODE = True
 DEBUG_MODE = False
 
@@ -184,21 +186,15 @@ if path_check_ok:
     num_days = 86400 * time_period  # in seconds
     now = time.time()               # in seconds
 
-    # set up logging
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)8s %(message))',
-                        filename=pepcomposer_log,
-                        datefmt=date_format_string,
-                        filemode='w')
-    global_log = logging.getLogger('Global Log')
-    logging.getLogger('').addHandler(global_log)
+    # set up global logging
+    peplog = open(pepcomposer_log,'a')
     for dirs in os.listdir(pepcomposer_jobs_dir):
         # find all jobs in job dir older than "num_days" period days
         job_name = dirs
         job_path = os.path.join(pepcomposer_jobs_dir, dirs)
         if os.path.isdir(job_path): 
             archive_path = os.path.join(pepcomposer_jobs_archive_dir,
-                                        job_name + ".tar.gz")
+                                        job_name)
             last_modified = os.path.getctime(job_path)
 
             if now - num_days > last_modified:
@@ -251,23 +247,27 @@ if path_check_ok:
                                 shutil.make_archive(archive_path,
                                                     "gztar", temp_job_dir)
                                 # delete job and clean-up
-                                with open(log_file,'r') as f:
-                                    read_log=f.read()
-                                logging.info(read_log)         
-                                # shutil.rmtree(job_path)
+                                #with open(job_log,'r') as f:
+                                #    read_log=f.read()
+                                fin = fileinput.input(job_log)
+                                for line in fin:
+                                    peplog.write(line)
+                                fin.close
+                                peplog.flush
+                                shutil.rmtree(job_path)
                                 shutil.rmtree(temp_job_dir)
                     else:
                         print "Empty or incomplete job, deleting"
                         if not DEBUG_MODE:
                             print "Deleting job " + job_path
-                            #shutil.rmtree(job_path)
+                            shutil.rmtree(job_path)
                 else:
                     # if sample JOB --> do nothing
                     print "Skipping example job " + job_name
         else:
             print("Skipping file " + job_name)
     # all done, close logging objects and exit
-    logging.shutdown()
+    peplog.close
     sys.exit(0)
 
 else:
