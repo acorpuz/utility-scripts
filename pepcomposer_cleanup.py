@@ -20,7 +20,7 @@
 #           - complete_models directory
 #           - input_parameters.info file
 #
-# TODO: what happens when script status is not finished?
+# TODO: debug logging errors.
 # --------------------------------------------------------------------
 # 2017 Sapienza - department of bioinformatics
 #
@@ -33,9 +33,11 @@
 # 2017-02-28  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Final script, needs to be debugged on production server
 #
-#  2017-03-09  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# 2017-03-09  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Added skipping files to script. Activated all parts.
 #
+# 2017-03-16  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Added handling for when script status is "error" (delete after 14 days)
 # ######################################################################
 import os
 import shutil
@@ -58,6 +60,7 @@ pepcomposer_log = os.path.join(pepcomposer_jobs_archive_dir,
 time_period = 14  # in days
 date_format_string = "%Y_%m_%d-%H:%M:%S"
 JOB_STATUS_FINISHED = "finished"
+JOB_STATUS_ERROR = "error"
 
 jobs_path_check_ok = False
 path_check_ok = False
@@ -209,7 +212,7 @@ if path_check_ok:
                         with open (log_file,'r') as fo:
                             job_status = fo.readline()
                         
-                        if job_status == JOB_STATUS_FINISHED:
+                        if job_status == JOB_STATUS_FINISHED or job_status == JOB_STATUS_ERROR:
                             temp_job_dir = os.path.join(pepcomposer_jobs_dir,
                                                         job_name + "_tmp")
                             job_log = os.path.join(temp_job_dir, "operations.log")
