@@ -41,6 +41,10 @@
 #
 # 2017-04-06  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Added logging to specific and global file.
+#
+# 2017-04-11  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Refactored delete job code and added logging to global script.
+#   Activated final script on production server
 # ######################################################################
 import os
 import shutil
@@ -52,20 +56,20 @@ from logging.handlers import TimedRotatingFileHandler
 from logging import FileHandler
 from logging import StreamHandler
 
-DEBUG_MODE = True
-#DEBUG_MODE = False
+#DEBUG_MODE = True
+DEBUG_MODE = False
 
 pepcomposer_path = "/var/www/pepcomposer/"  # check for trailing slash
 # delete this on production machine, needed only for local testing
 #if DEBUG_MODE: pepcomposer_path = "tmp_pepcomposer" + pepcomposer_path
 # end delete
 pepcomposer_jobs_dir = os.path.join(pepcomposer_path,"jobs")
-pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_path,
-                                            "archived_jobs")
-pepcomposer_log = os.path.join(pepcomposer_jobs_archive_dir,
-                               "pepcomposer.log")
+pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_path, "archived_jobs")
+pepcomposer_log = os.path.join(pepcomposer_jobs_archive_dir,  "pepcomposer.log")
+
 time_period = 14  # in days
 date_format_string = "%Y_%m_%d-%H:%M:%S"
+
 JOB_STATUS_FINISHED = "finished"
 JOB_STATUS_ERROR = "error"
 JOB_STATUS_MISSING = "missing"
@@ -133,12 +137,14 @@ need_to_save_list = [
     "input_parameters.info_new",
     "input_parameters.info_original"
 ]
+
 def found_in_examples(job_id):
     # search for job in sample list
     found_job = False
     for element in sample_jobs:
         if element == job_id:
             found_job = True
+            break
     return found_job
 
 def check_if_root():
@@ -146,6 +152,13 @@ def check_if_root():
     if user != 0:
         print "Please run as root..."
         sys. exit(1) 
+
+def delete_job(full_path_to_job_dir):
+    # delete job passed as path and log to global log
+    globalLogger.warn ("Deleting job " + full_path_to_job_dir + "...")
+    shutil.rmtree(full_path_to_job_dir)
+    globalLogger.warn ("Job " + full_path_to_job_dir + " deleted.")
+
 
 # checking root status, but only if not debugging
 if not DEBUG_MODE:
@@ -199,7 +212,7 @@ if path_check_ok:
     num_days = 86400 * time_period  # in seconds
     now = time.time()               # in seconds
 
-    # set up global logging
+    # set up global logging, log to file and to console
     globalLogger = logging.getLogger('global log')
     globalLogger.setLevel(logging.INFO)
 
@@ -214,24 +227,16 @@ if path_check_ok:
     globalLogger.addHandler(global_log_handler)
     globalLogger.addHandler(console)
 
-#    logging.basicConfig(level=logging.INFO,
-#                        format='%(asctime)s %(levelname)s %(message)s',
-#                        filename='pepcomposer_log',
-#                        filemode='w')
-#    logging.info('Some information')
-#    peplog = open(pepcomposer_log,'a')
     for dirs in os.listdir(pepcomposer_jobs_dir):
-        # find all jobs in job dir older than "num_days" period days
+        # find all jobs in job dir older than "num_days" period of days
         job_name = dirs
         job_path = os.path.join(pepcomposer_jobs_dir, dirs)
         if os.path.isdir(job_path): 
-            archive_path = os.path.join(pepcomposer_jobs_archive_dir,
-                                        job_name)
+            archive_path = os.path.join(pepcomposer_jobs_archive_dir, job_name)
             last_modified = os.path.getctime(job_path)
 
             if now - num_days > last_modified:
                 globalLogger.info("Processing job " + job_name)
-                #print "Processing job " + job_name
                 # for each job older than "time_period",
                 # check if it is a sample job
                 job_status = ""
@@ -245,8 +250,7 @@ if path_check_ok:
                         job_status = JOB_STATUS_MISSING
 
                     if job_status == JOB_STATUS_FINISHED: 
-                        temp_job_dir = os.path.join(pepcomposer_jobs_dir,
-                                                    job_name + "_tmp")
+                        temp_job_dir = os.path.join(pepcomposer_jobs_dir, job_name + "_tmp")
                         job_log = os.path.join(temp_job_dir, "operations.log")
                         curr_date = time.strftime(date_format_string)
                         job_end_date = time.gmtime(os.path.getmtime(job_path))
@@ -255,20 +259,18 @@ if path_check_ok:
                         if os.path.exists(temp_job_dir):
                             shutil.rmtree(temp_job_dir)       
                         os.makedirs(temp_job_dir)
-                        
+
+                        # add local job formatter
                         job_log_handler = FileHandler(job_log)
                         # create formatter and add it to the handlers
                         job_log_formatter = logging.Formatter('%(message)s')
                         job_log_handler.setFormatter(job_log_formatter)
                         globalLogger.addHandler(job_log_handler)
+
                         globalLogger.info("Archiving job " + job_name + " on " + str(curr_date) + "\n")
                         globalLogger.info("="*40 + "\n")
                         globalLogger.info("Job completed on " + job_end_date + "\n")
  
-                        #flog = open(job_log, 'w')
-                        #flog.write("Archiving job " + job_name + " on " + str(curr_date) + "\n")
-                        #flog.write("="*40 + "\n")
-                        #flog.write("Job completed on " + job_end_date + "\n")
                         # save complete model directory
                         # and input_parameters files
                         for obj in need_to_save_list:
@@ -289,32 +291,30 @@ if path_check_ok:
                                     globalLogger.info("*"*40 + "\n")
                         job_log_handler.close()
                         globalLogger.removeHandler(job_log_handler)
-                        #flog.clos
+
                         if not DEBUG_MODE:
-                            # tar.gz everything
-                            shutil.make_archive(archive_path,
-                                                "gztar", temp_job_dir)
-                            # delete job and clean-up
-                            #shutil.rmtree(job_path)
-                            #shutil.rmtree(temp_job_dir)
+                            # tar.gz everything in temp job directory
+                            try:
+                                shutil.make_archive(archive_path, "gztar", temp_job_dir)
+                                # delete job and clean-up
+                                delete_job(job_path)
+                                delete_job(temp_job_dir)
+                            except:
+                                globalLogger.error("Error archiving file!")
                     elif job_status == JOB_STATUS_MISSING:
                         globalLogger.warn ("Empty or incomplete job, deleting")
-                        #print "Empty or incomplete, deleting"
-                        # add delete job function
-                        #if not DEBUG_MODE:
-                            #shutil.rmtree(job_path)
+                        if not DEBUG_MODE:
+                            delete_job(job_path)
                     elif job_status == JOB_STATUS_ERROR:
-                        #print "Misconfigured job, deleting"
                         globalLogger.warn ("Misconfigured job, deleting")
-                        #if not DEBUG_MODE:
-                            #shutil.rmtree(job_path)
+                        if not DEBUG_MODE:
+                            delete_job(job_path)
                 else:
                     # if sample JOB --> do nothing
                     globalLogger.info ("Skipping example job " + job_name)
-                    #print "Skipping example job " + job_name
         else:
             globalLogger.info("Skipping file " + job_name)
-           # print("Skipping file " + job_name)
+    
     # all done, close logging objects and exit
     sys.exit(0)
 
