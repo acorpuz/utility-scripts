@@ -155,9 +155,9 @@ def check_if_root():
 
 def delete_job(full_path_to_job_dir):
     # delete job passed as path and log to global log
-    globalLogger.warn ("Deleting job " + full_path_to_job_dir + "...")
+    globalLogger.warn ("Deleting path " + full_path_to_job_dir + "...")
     shutil.rmtree(full_path_to_job_dir)
-    globalLogger.warn ("Job " + full_path_to_job_dir + " deleted.")
+    globalLogger.warn ("Path " + full_path_to_job_dir + " deleted.")
 
 
 # checking root status, but only if not debugging
@@ -267,9 +267,9 @@ if path_check_ok:
                         job_log_handler.setFormatter(job_log_formatter)
                         globalLogger.addHandler(job_log_handler)
 
-                        globalLogger.info("Archiving job " + job_name + " on " + str(curr_date) + "\n")
-                        globalLogger.info("="*40 + "\n")
-                        globalLogger.info("Job completed on " + job_end_date + "\n")
+                        globalLogger.info("Archiving job " + job_name + " on " + str(curr_date))
+                        globalLogger.info("="*40)
+                        globalLogger.info("Job completed on " + job_end_date)
  
                         # save complete model directory
                         # and input_parameters files
@@ -279,15 +279,15 @@ if path_check_ok:
                             if os.path.exists(target):
                                 if os.path.isdir(target):
                                     shutil.copytree(target, destination)
-                                    globalLogger.info("Saving " + obj +"\n")
+                                    globalLogger.info("Saving " + obj + "...")
                                 else:
                                     shutil.copy2(target, temp_job_dir)
                                     read_data=""
                                     with open(target,'r') as f:
                                         read_data=f.read()
-                                    globalLogger.info("File " + obj + "\n")
-                                    globalLogger.info("*"*40 + "\n")
-                                    globalLogger.info(read_data + "\n")
+                                    globalLogger.info("File " + obj)
+                                    globalLogger.info("*"*40)
+                                    globalLogger.info(read_data)
                                     globalLogger.info("*"*40 + "\n")
                         job_log_handler.close()
                         globalLogger.removeHandler(job_log_handler)
@@ -295,7 +295,9 @@ if path_check_ok:
                         if not DEBUG_MODE:
                             # tar.gz everything in temp job directory
                             try:
+                                globalLogger.info("Archiving files...")
                                 shutil.make_archive(archive_path, "gztar", temp_job_dir)
+                                globalLogger.info("Files archived in " + archive_path + "tar.gz")
                                 # delete job and clean-up
                                 delete_job(job_path)
                                 delete_job(temp_job_dir)
