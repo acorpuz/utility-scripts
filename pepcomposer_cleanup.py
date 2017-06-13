@@ -288,7 +288,7 @@ if path_check_ok:
                                     globalLogger.info("File " + obj)
                                     globalLogger.info("*"*40)
                                     globalLogger.info(read_data)
-                                    globalLogger.info("*"*40 + "\n")
+                                    globalLogger.info("*"*40)
                         job_log_handler.close()
                         globalLogger.removeHandler(job_log_handler)
 
