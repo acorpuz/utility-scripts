@@ -20,8 +20,7 @@
 #           - complete_models directory
 #           - input_parameters.info file
 #
-# TODO: what happens when script status is not finished?
-# TODO: what happens to other files (.zip files, .pdb files)?
+# TODO: debug logging errors.
 # --------------------------------------------------------------------
 # 2017 Sapienza - department of bioinformatics
 #
@@ -34,28 +33,46 @@
 # 2017-02-28  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
 # * Final script, needs to be debugged on production server
 #
+# 2017-03-09  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Added skipping files to script. Activated all parts.
+#
+# 2017-03-16  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Added handling for when script status is "error" (delete after 14 days)
+#
+# 2017-04-06  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Added logging to specific and global file.
+#
+# 2017-04-11  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
+# * Refactored delete job code and added logging to global script.
+#   Activated final script on production server
 # ######################################################################
 import os
 import shutil
 import sys
 import time
+import fileinput
 import logging
+from logging.handlers import TimedRotatingFileHandler
+from logging import FileHandler
+from logging import StreamHandler
 
-DEBUG_MODE = True
-# DEBUG_MODE = False
+#DEBUG_MODE = True
+DEBUG_MODE = False
 
 pepcomposer_path = "/var/www/pepcomposer/"  # check for trailing slash
-# delete this on production machine, nedded only fo local testing
+# delete this on production machine, needed only for local testing
 #if DEBUG_MODE: pepcomposer_path = "tmp_pepcomposer" + pepcomposer_path
 # end delete
 pepcomposer_jobs_dir = os.path.join(pepcomposer_path,"jobs")
-pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_path,
-                                            "archived_jobs")
-pepcomposer_log = os.path.join(pepcomposer_jobs_archive_dir,
-                               "pepcomposer.log")
+pepcomposer_jobs_archive_dir = os.path.join(pepcomposer_path, "archived_jobs")
+pepcomposer_log = os.path.join(pepcomposer_jobs_archive_dir,  "pepcomposer.log")
+
 time_period = 14  # in days
 date_format_string = "%Y_%m_%d-%H:%M:%S"
+
 JOB_STATUS_FINISHED = "finished"
+JOB_STATUS_ERROR = "error"
+JOB_STATUS_MISSING = "missing"
 
 jobs_path_check_ok = False
 path_check_ok = False
@@ -120,19 +137,28 @@ need_to_save_list = [
     "input_parameters.info_new",
     "input_parameters.info_original"
 ]
+
 def found_in_examples(job_id):
     # search for job in sample list
     found_job = False
     for element in sample_jobs:
         if element == job_id:
             found_job = True
+            break
     return found_job
 
 def check_if_root():
     user = os.getuid()
     if user != 0:
-        print "Please run as root,,."
+        print "Please run as root..."
         sys. exit(1) 
+
+def delete_job(full_path_to_job_dir):
+    # delete job passed as path and log to global log
+    globalLogger.warn ("Deleting path " + full_path_to_job_dir + "...")
+    shutil.rmtree(full_path_to_job_dir)
+    globalLogger.warn ("Path " + full_path_to_job_dir + " deleted.")
+
 
 # checking root status, but only if not debugging
 if not DEBUG_MODE:
@@ -168,6 +194,8 @@ if DEBUG_MODE:
     print "pepcomposer_log = " + pepcomposer_log
     print "time_period = " + str(time_period) + " (days)"
     print "JOB_STATUS_FINISHED = " + JOB_STATUS_FINISHED
+    print "JOB_STATUS_MISSING = " + JOB_STATUS_MISSING
+    print "JOB_STATUS_ERROR = " + JOB_STATUS_ERROR
     print "sample_jobs = ", sample_jobs
     print ("==============================")
     print ("End Variables assignments\n\n")
@@ -184,26 +212,31 @@ if path_check_ok:
     num_days = 86400 * time_period  # in seconds
     now = time.time()               # in seconds
 
-    # set up logging
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)8s %(message))',
-                        filename=pepcomposer_log,
-                        datefmt=date_format_string,
-                        filemode='w')
-    global_log = logging.getLogger('Global Log')
-    logging.getLogger('').addHandler(global_log)
-    for root, dirs, files in os.walk(pepcomposer_jobs_dir): 
-        # find all jobs in job dir older than "num_days" period days
-        for directory in dirs:
-            job_name = directory
-            job_path = os.path.join(root,directory)
-            archive_path = os.path.join(pepcomposer_jobs_archive_dir,
-                                        job_name + ".tar.gz")
+    # set up global logging, log to file and to console
+    globalLogger = logging.getLogger('global log')
+    globalLogger.setLevel(logging.INFO)
+
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG)
+    console_format=logging.Formatter('%(name)-12s: %(message)s')
+    console.setFormatter(console_format)
+
+    global_log_handler = TimedRotatingFileHandler(pepcomposer_log, when='W6')
+    global_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    global_log_handler.setFormatter(global_formatter)
+    globalLogger.addHandler(global_log_handler)
+    globalLogger.addHandler(console)
+
+    for dirs in os.listdir(pepcomposer_jobs_dir):
+        # find all jobs in job dir older than "num_days" period of days
+        job_name = dirs
+        job_path = os.path.join(pepcomposer_jobs_dir, dirs)
+        if os.path.isdir(job_path): 
+            archive_path = os.path.join(pepcomposer_jobs_archive_dir, job_name)
             last_modified = os.path.getctime(job_path)
 
             if now - num_days > last_modified:
-                print "Processing job " + job_name
-                raw_input("Press Enter to continue...")
+                globalLogger.info("Processing job " + job_name)
                 # for each job older than "time_period",
                 # check if it is a sample job
                 job_status = ""
@@ -213,68 +246,85 @@ if path_check_ok:
                     if os.path.exists(log_file):
                         with open (log_file,'r') as fo:
                             job_status = fo.readline()
-                        
-                        if job_status == JOB_STATUS_FINISHED:
-                            temp_job_dir = os.path.join(pepcomposer_jobs_dir,
-                                                        job_name + "_tmp")
-                            job_log = os.path.join(temp_job_dir, "operations.log")
-                            curr_date = time.strftime(date_format_string)
-                            job_end_date = os.path.getmtime(job_path)
-                            # log deletion date (curr_date)
-                            # TODO: write log file
-                            raw_input("Archiving job name - " +  job_name + " in " + temp_job_dir)
-                            if not os.path.exists(temp_job_dir):
-                                os.makedirs(temp_job_dir)
-                            logging.basicConfig(level=logging.INFO,
-                                                format='%(asctime)8s %(message))',
-                                                filename=job_log,
-                                                datefmt=date_format_string,
-                                                filemode='w')
-                            single_job_log = logging.getLogger(job_name)
-                            logging.getLogger('').addHandler(single_job_log)
-                            logging.info("Archiving job %s on %s", job_name, curr_date)
-                            logging.info("="*40)
-                            logging.info("Job completed on %s with the following parameters:", job_end_date)
-                            # save complete model directory
-                            # and input_parameters files
-                            raw_input("saving objects: " + need_to_save_list)
-                            for obj in need_to_save_list:
-                                raw_input("saving object" + obj)
-                                if os.path.exists(obj):
-                                    raw_input(obj + " exists")
-                                    target = os.path.join(job_path, obj)
-                                    raw_input("target path:" + target)
+                    else:
+                        job_status = JOB_STATUS_MISSING
+
+                    if job_status == JOB_STATUS_FINISHED: 
+                        temp_job_dir = os.path.join(pepcomposer_jobs_dir, job_name + "_tmp")
+                        job_log = os.path.join(temp_job_dir, "operations.log")
+                        curr_date = time.strftime(date_format_string)
+                        job_end_date = time.gmtime(os.path.getmtime(job_path))
+                        job_end_date = time.strftime(date_format_string, job_end_date)
+                        # Clear temp dir if exists (failsafe for old dirs)
+                        if os.path.exists(temp_job_dir):
+                            shutil.rmtree(temp_job_dir)       
+                        os.makedirs(temp_job_dir)
+
+                        # add local job formatter
+                        job_log_handler = FileHandler(job_log)
+                        # create formatter and add it to the handlers
+                        job_log_formatter = logging.Formatter('%(message)s')
+                        job_log_handler.setFormatter(job_log_formatter)
+                        globalLogger.addHandler(job_log_handler)
+
+                        globalLogger.info("Archiving job " + job_name + " on " + str(curr_date))
+                        globalLogger.info("="*40)
+                        globalLogger.info("Job completed on " + job_end_date)
+ 
+                        # save complete model directory
+                        # and input_parameters files
+                        for obj in need_to_save_list:
+                            target = os.path.join(job_path, obj)
+                            destination = os.path.join(temp_job_dir, obj)
+                            if os.path.exists(target):
+                                if os.path.isdir(target):
+                                    shutil.copytree(target, destination)
+                                    globalLogger.info("Saving " + obj + "...")
+                                else:
                                     shutil.copy2(target, temp_job_dir)
                                     read_data=""
                                     with open(target,'r') as f:
                                         read_data=f.read()
-                                    logging.info("File - %s", obj)
-                                    logging.info("*"*40)
-                                    logging.info(read_data)
-                                    logging.info("*"*40)
-                                
-                            if not DEBUG_MODE:
-                                # tar.gz everything
-                                shutil.make_archive(archive_path,
-                                                    "gztar", temp_job_dir)
-                                # delete job and clean-up
-                                shutil.rmtree(job_path)
-                                shutil.rmtree(temp_job_dir)
-                            logging.getLogger('').removeHandler(single_job_log)
-                    else:
-                        print "Empty or incomplete job, deleting"
+                                    globalLogger.info("File " + obj)
+                                    globalLogger.info("*"*40)
+                                    globalLogger.info(read_data)
+                                    globalLogger.info("*"*40)
+                        job_log_handler.close()
+                        globalLogger.removeHandler(job_log_handler)
+
                         if not DEBUG_MODE:
-                                shutil.rmtree(job_path)
+                            # tar.gz everything in temp job directory
+                            try:
+                                globalLogger.info("Archiving files...")
+                                shutil.make_archive(archive_path, "gztar", temp_job_dir)
+                                globalLogger.info("Files archived in " + archive_path + "tar.gz")
+                                # delete job and clean-up
+                                delete_job(job_path)
+                                delete_job(temp_job_dir)
+                            except:
+                                globalLogger.error("Error archiving file!")
+                    elif job_status == JOB_STATUS_MISSING:
+                        globalLogger.warn ("Empty or incomplete job, deleting")
+                        if not DEBUG_MODE:
+                            delete_job(job_path)
+                    elif job_status == JOB_STATUS_ERROR:
+                        globalLogger.warn ("Misconfigured job, deleting")
+                        if not DEBUG_MODE:
+                            delete_job(job_path)
                 else:
                     # if sample JOB --> do nothing
-                    print "Skipping example job " + job_name
+                    globalLogger.info ("Skipping example job " + job_name)
+        else:
+            globalLogger.info("Skipping file " + job_name)
+    
     # all done, close logging objects and exit
-    logging.shutdown()
     sys.exit(0)
 
 else:
     if not path_check_ok:
-        print "ERROR!!! Pepcomposer directory not found in ", pepcomposer_path, "!"
+        globalLogger.warn("ERROR!!! Pepcomposer directory not found in ", pepcomposer_path, "!")
+        #print "ERROR!!! Pepcomposer directory not found in ", pepcomposer_path, "!"
     if not jobs_path_check_ok:
-        print "ERROR!!! Pepcomposer jobs directory not found in ", pepcomposer_jobs_dir, "!"
+        globalLogger.warn("ERROR!!! Pepcomposer jobs directory not found in ", pepcomposer_jobs_dir, "!")
+        #print "ERROR!!! Pepcomposer jobs directory not found in ", pepcomposer_jobs_dir, "!"
     sys.exit(1)

@@ -18,7 +18,7 @@
 # * Initial script
 #
 # 2017-03-02  bioangel  <angel<dot>corpuz<dot>jr@gmail<dot>com>
-# * Added end of commands status feedback. Reworked 
+# * Added end of commands status feedback. Reworked tar command.
 #
 # ####################################################################
 
@@ -96,7 +96,7 @@ if [ "$(id -u)" -eq 0 ]; then
                         project_path=$(dirname "${home_dir}")
                         echo "Clearing home directory ${home_dir} ..."
                         cd "$project_path"
-                        tar --checkpoint czf "${project_name}.tar.gz" "$project_name" && rm -rf "${home_dir}*"
+                        tar -czf "${project_name}.tar.gz" "$project_name" && rm -rf "${home_dir}*"
                         echo "Home directory ${home_dir} cleared, contents saved as ${project_name}.tar.gz"
                     else
                         echo "Home directory ${home_dir} not found, exiting..."
