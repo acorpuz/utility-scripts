@@ -96,7 +96,7 @@ if [ "$(id -u)" -eq 0 ]; then
                         project_path=$(dirname "${home_dir}")
                         echo "Clearing home directory ${home_dir} ..."
                         cd "$project_path"
-                        tar -czf "${project_name}.tar.gz" "$project_name" && rm -rf "${home_dir}*"
+                        tar -czf "${project_name}.tar.gz" "$project_name" && rm -rf "${home_dir}/*"
                         echo "Home directory ${home_dir} cleared, contents saved as ${project_name}.tar.gz"
                     else
                         echo "Home directory ${home_dir} not found, exiting..."
