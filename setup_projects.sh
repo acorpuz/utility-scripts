@@ -73,19 +73,18 @@ if [ "$(id -u)" -eq 0 ]; then
     mkdir -p "$path_to_project"
 
     log_action_cont_msg "Adding user $project_user to system"
-    # generate a random passwd
-    passwd=$(pwgen 4)
-    usrpass="${project_name}_${passwd}"
-    # add the user
-    cryptpass=$(perl -e 'print crypt($ARGV[0], "password")' "$usrpass")
-    useradd -d "$path_to_project" -g "$project_group" -p "$cryptpass" "$project_user"
-    # expire password
-    passwd -e "$project_user"
+    useradd -d "$path_to_project" -g "$project_group" "$project_user"
 
     log_action_cont_msg "Setting up $project_name permissions"
     chown "$project_user":"$project_group" "$path_to_project"
     chmod 2770 "$path_to_project"
     
+    log_action_cont_msg "Generating ${project_user} user keys and activating ssh login"
+    path_to_key="${path_to_project}/.ssh"
+    mkdir -p "$path_to_key" 
+    ssh-keygen -b 2048 -t rsa -f "${path_to_key}/${project_user}_rsa"
+    cat "${path_to_key}/${project_user}_rsa.pub" >> "${path_to_key}/authorized_keys"
+
     # all done, report outcome
     log_action_end_msg 0
     
@@ -93,10 +92,10 @@ if [ "$(id -u)" -eq 0 ]; then
     
     echo "Project ${project_name} details:"
     echo -e "\t*) Project directory created in ${path_to_project}"
-    echo -e "\t*) User ${project_user} added with password ${usrpass}"
-    echo -e "\t*) Connect to server with:\tssh -p 2015 ${project_user}@genomesrv.med.uniroma1.it"
-    echo -e "\t*) You will be asked to change your password on your first login,"
-    echo -e "\tplease follow on-screen directions."
+    echo -e "\t*) User ${project_user} added with rsa key in ${path_to_key}"
+    echo -e "\t*) Connect to server with:\tssh -i ${project_user}_rsa -p 2015 ${project_user}@genomesrv.med.uniroma1.it"
+    echo -e "\t*) You will need to apply correct permissions (chmod 0600 ${project_user}_rsa)"
+    echo -e "\tto use the ssh key."
     echo -e "==========================================================="
     exit 0
 else
