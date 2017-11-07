@@ -297,7 +297,7 @@ if path_check_ok:
                             try:
                                 globalLogger.info("Archiving files...")
                                 shutil.make_archive(archive_path, "gztar", temp_job_dir)
-                                globalLogger.info("Files archived in " + archive_path + "tar.gz")
+                                globalLogger.info("Files archived in " + archive_path + ".tar.gz")
                                 # delete job and clean-up
                                 delete_job(job_path)
                                 delete_job(temp_job_dir)
