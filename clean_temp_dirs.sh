@@ -46,8 +46,7 @@ fi
 
 # find and delete files older than 30 days in temp dirs
 for i in "/tmp" "/mnt/scratch" "/var/tmp"; do
-	cd "$i"
-	find . -mtime +30 -delete
+	find "$i" -mtime +30 -delete
 done
 
 # clean-up old jobs and logs...
@@ -64,10 +63,10 @@ done
 # The pattern is not valid for all webservers.
 # TODO: expand to include other job patterns for other webservers ...
  
-cd /var/www/
-find . -type d -mtime +${days_to_keep_jobs} | egrep [u][0-9]\{4}[a-zA-Z0-9]\{5} > $outfile
+cd /var/www/ || exit
+find . -type d -mtime +${days_to_keep_jobs} | grep -E "[u][0-9]\{4}[a-zA-Z0-9]\{5}" > $outfile
 
-while read l; do
+while read -r l; do
 	if [ -e "$l" ]; then
 		echo "Deleting job directory ${l} [last modified $(stat -c %y "${l}")]" >>  "$logfile"
 		rm -rf "$l"

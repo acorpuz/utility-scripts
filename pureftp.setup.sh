@@ -2,8 +2,7 @@
 
 # Script di setup di pureftp
 
-
-if [ $(id -u) -eq 0 ]; then
+if [ "$(id -u)" -eq 0 ]; then
     # installall base package with mysql support
     apt-get update
     apt-get install pure-ftpd-mysql
