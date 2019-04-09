@@ -151,7 +151,7 @@ def check_if_root():
     user = os.getuid()
     if user != 0:
         print "Please run as root..."
-        sys. exit(1) 
+        sys. exit(1)
 
 def delete_job(full_path_to_job_dir):
     # delete job passed as path and log to global log
@@ -171,7 +171,7 @@ if not os.path.exists(pepcomposer_path):
         path_check_ok = True
 else:
     path_check_ok = True
-    
+
 if not os.path.exists(pepcomposer_jobs_dir):
     if DEBUG_MODE:
         os.makedirs(pepcomposer_path)
@@ -181,7 +181,7 @@ else:
 
 if not os.path.exists(pepcomposer_jobs_archive_dir):
     os.mkdir(pepcomposer_jobs_archive_dir,2775)
-    
+
 if DEBUG_MODE:
     print ("********** Start Tests **********\n")
     print ("Variables assignments")
@@ -199,13 +199,13 @@ if DEBUG_MODE:
     print "sample_jobs = ", sample_jobs
     print ("==============================")
     print ("End Variables assignments\n\n")
-    
+
     not_sample = "NOT A SAMPLE JOB"
     is_sample = "4ds1_61_8_56f57d702ccc5"
     print "Is " + not_sample + " an example? " + str(found_in_examples (not_sample))
     print "Is " + is_sample + " an example? " + str(found_in_examples (is_sample))
     print ("\n*********** End Tests ***********\n")
-    
+
 if path_check_ok:
     # mtime returns last modified time in seconds from epoch,
     # converting time_period in days to seconds
@@ -231,7 +231,7 @@ if path_check_ok:
         # find all jobs in job dir older than "num_days" period of days
         job_name = dirs
         job_path = os.path.join(pepcomposer_jobs_dir, dirs)
-        if os.path.isdir(job_path): 
+        if os.path.isdir(job_path):
             archive_path = os.path.join(pepcomposer_jobs_archive_dir, job_name)
             last_modified = os.path.getctime(job_path)
 
@@ -249,7 +249,7 @@ if path_check_ok:
                     else:
                         job_status = JOB_STATUS_MISSING
 
-                    if job_status == JOB_STATUS_FINISHED: 
+                    if job_status == JOB_STATUS_FINISHED:
                         temp_job_dir = os.path.join(pepcomposer_jobs_dir, job_name + "_tmp")
                         job_log = os.path.join(temp_job_dir, "operations.log")
                         curr_date = time.strftime(date_format_string)
@@ -257,7 +257,7 @@ if path_check_ok:
                         job_end_date = time.strftime(date_format_string, job_end_date)
                         # Clear temp dir if exists (failsafe for old dirs)
                         if os.path.exists(temp_job_dir):
-                            shutil.rmtree(temp_job_dir)       
+                            shutil.rmtree(temp_job_dir)
                         os.makedirs(temp_job_dir)
 
                         # add local job formatter
@@ -270,7 +270,7 @@ if path_check_ok:
                         globalLogger.info("Archiving job " + job_name + " on " + str(curr_date))
                         globalLogger.info("="*40)
                         globalLogger.info("Job completed on " + job_end_date)
- 
+
                         # save complete model directory
                         # and input_parameters files
                         for obj in need_to_save_list:
@@ -316,7 +316,7 @@ if path_check_ok:
                     globalLogger.info ("Skipping example job " + job_name)
         else:
             globalLogger.info("Skipping file " + job_name)
-    
+
     # all done, close logging objects and exit
     sys.exit(0)
 
