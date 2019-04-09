@@ -35,7 +35,7 @@ check_user () {
     local USR
     USR="$1"
     getent passwd "$USR"  > /dev/null
-    if [ $? -eq 0 ]; then
+    if getent passwd "$USR" -eq 0; then
         #" user exists"
         echo 0
     else
@@ -70,7 +70,7 @@ if [ "$(id -u)" -eq 0 ]; then
         
         if [ "$account_status" == "L" ]; then
             # account is locked, ask to re-enable (default is no)
-            read -p "Account for ${usr_name} is locked; enable account? [y/N]" ans
+            read -r -p "Account for ${usr_name} is locked; enable account? [y/N]" ans
             case ${ans} in
                 y|Y )
                     echo "Un-locking user ${usr_name}..."
@@ -84,7 +84,7 @@ if [ "$(id -u)" -eq 0 ]; then
 
         else
             # account is enabled, ask to lock (not strictly true but good for our purposes)
-            read -p "Account for ${usr_name} is enabled; lock account and delete contents of ${home_dir}? [y/N]" ans
+            read -r -p "Account for ${usr_name} is enabled; lock account and delete contents of ${home_dir}? [y/N]" ans
             case ${ans} in
                 y|Y )
                     echo "Locking user ${usr_name}..."
@@ -95,8 +95,9 @@ if [ "$(id -u)" -eq 0 ]; then
                         project_name=$(basename "${home_dir}")
                         project_path=$(dirname "${home_dir}")
                         echo "Clearing home directory ${home_dir} ..."
-                        cd "$project_path"
-                        tar -czf "${project_name}.tar.gz" "$project_name" && rm -rf "${home_dir}*"
+                        cd "$project_path" || exit
+                        # Using :? will cause the command to fail if the variable is null or unset
+                        tar -czf "${project_name}.tar.gz" "$project_name" && rm -rf "${home_dir:?}/*"
                         echo "Home directory ${home_dir} cleared, contents saved as ${project_name}.tar.gz"
                     else
                         echo "Home directory ${home_dir} not found, exiting..."
@@ -114,7 +115,7 @@ if [ "$(id -u)" -eq 0 ]; then
         exit 2
     fi
     # all done
-    cd "$curr_dir"
+    cd "$curr_dir" || exit
     exit 0
     
 else

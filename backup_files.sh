@@ -22,7 +22,7 @@
 
 
 showuse () {
-	echo -e "Pass an existing filename to the script\n" 
+	echo -e "Usage: Pass an existing filename to the script\n" 
 	echo -e "\tFile will be backed-up with the current" 
 	echo -e "\ttimestamp and the extension \".bck\" in its name." 
 }
@@ -65,6 +65,6 @@ if [ -r "$filename" ]; then
 	
 	exit 0
 else
-	echo "Run as root."
+	echo "Cannot access file. Run as root."
 	exit 1
 fi

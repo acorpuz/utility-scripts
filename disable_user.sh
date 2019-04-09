@@ -28,7 +28,7 @@ function check_user {
     local USR
     USR="$1"
     getent passwd "$USR"  > /dev/null
-    if [ $? -eq 0 ]; then
+    if getent passwd "$USR"; then
         #" user exists"
         echo 0
     else
@@ -45,7 +45,7 @@ function showuse  {
 
 if [ "$(id -u)" -eq 0 ]; then
     CURRDIR=$(pwd)
-    cd /home
+    cd /home || exit
     
     # We need one parameter, check for it...
     if [ ! $# -eq 1 ]; then
@@ -69,7 +69,7 @@ if [ "$(id -u)" -eq 0 ]; then
         HOMEDIR=$(getent passwd "$USRNAME" | cut -d : -f 6)
         echo "User ${USRNAME} exists, home directory in :${HOMEDIR}"
 
-        read -p "Disable account for ${USRNAME} and save and delete contents of ${HOMEDIR}? [y/N]" ans
+        read -r -p "Disable account for ${USRNAME} and save and delete contents of ${HOMEDIR}? [y/N]" ans
         case ${ans} in
             y|Y )
                 # all set, let's expire, lock and set the shell to a non login shell
@@ -101,7 +101,7 @@ if [ "$(id -u)" -eq 0 ]; then
         exit 2
     fi
     
-    cd "$CURRDIR"
+    cd "$CURRDIR" || exit
     exit 0
 else
         echo "must be root"
