@@ -1,0 +1,4 @@
+ISSUE: inserire il contenuto del file "testo_da_inserire.txt" nel file "file_base.inp" tra le righe CONFIG e CLOSECONFIG facendo rimanere la riga subito dopo CONFIG.
+
+
+
