@@ -203,8 +203,12 @@ if DEBUG_MODE:
 
     not_sample = "NOT A SAMPLE JOB"
     is_sample = "4ds1_61_8_56f57d702ccc5"
-    print ("Is " + not_sample + " an example? " + str(found_in_examples(not_sample)))
-    print ("Is " + is_sample + " an example? " + str(found_in_examples(is_sample)))
+    print ("Is " + not_sample + " an example? " + str(
+        found_in_examples(not_sample))
+    )
+    print ("Is " + is_sample + " an example? ".format(
+        found_in_examples(is_sample))
+    )
     print ("\n*********** End Tests ***********\n")
 
 if path_check_ok:
@@ -223,7 +227,9 @@ if path_check_ok:
     console.setFormatter(console_format)
 
     global_log_handler = TimedRotatingFileHandler(pepcomposer_log, when='W6')
-    global_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    global_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s'
+    )
     global_log_handler.setFormatter(global_formatter)
     globalLogger.addHandler(global_log_handler)
     globalLogger.addHandler(console)
@@ -251,11 +257,15 @@ if path_check_ok:
                         job_status = JOB_STATUS_MISSING
 
                     if job_status == JOB_STATUS_FINISHED:
-                        temp_job_dir = os.path.join(pepcomposer_jobs_dir, job_name + "_tmp")
+                        temp_job_dir = os.path.join(
+                            pepcomposer_jobs_dir, job_name, "_tmp"
+                        )
                         job_log = os.path.join(temp_job_dir, "operations.log")
                         curr_date = time.strftime(date_format_string)
                         job_end_date = time.gmtime(os.path.getmtime(job_path))
-                        job_end_date = time.strftime(date_format_string, job_end_date)
+                        job_end_date = time.strftime(
+                            date_format_string, job_end_date
+                        )
                         # Clear temp dir if exists (failsafe for old dirs)
                         if os.path.exists(temp_job_dir):
                             shutil.rmtree(temp_job_dir)
@@ -268,7 +278,8 @@ if path_check_ok:
                         job_log_handler.setFormatter(job_log_formatter)
                         globalLogger.addHandler(job_log_handler)
 
-                        globalLogger.info("Archiving job " + job_name + " on " + str(curr_date))
+                        globalLogger.info("Archiving job {} on {}".format(
+                            job_name, curr_date))
                         globalLogger.info("=" * 40)
                         globalLogger.info("Job completed on " + job_end_date)
 
