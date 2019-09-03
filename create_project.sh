@@ -37,14 +37,14 @@ function showuse  {
     echo -e "\thome directory of the user PROJECT_NAME."
 }
 
+# We need one parameter, check for it...
+if [ ! $# -eq 1 ]; then
+    showuse
+    exit 99
+fi
 # check for root
 if [ "$(id -u)" -eq 0 ]; then
     
-    # We need one parameter, check for it...
-    if [ ! $# -eq 1 ]; then
-        showuse
-        exit 99
-    fi
     
     project_name="$1"
     # remove white space from name
