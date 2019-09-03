@@ -69,16 +69,13 @@ if [ "$(id -u)" -eq 0 ]; then
     log_action_cont_msg "Creating group ${project_group} "
     addgroup "$project_group"
     
-    log_action_cont_msg "Creating $path_to_project"
-    mkdir -p "$path_to_project"
-
     log_action_cont_msg "Adding user $project_user to system"
     # generate a random passwd
     passwd=$(pwgen 6)
     usrpass="${project_name}_${passwd}"
     # add the user
     cryptpass=$(perl -e 'print crypt($ARGV[0], "password")' "$usrpass")
-    useradd -d "$path_to_project" -g "$project_group" -p "$cryptpass" "$project_user"
+    useradd -m -d "$path_to_project" -g "$project_group" -p "$cryptpass" "$project_user"
 
     log_action_cont_msg "Setting up $project_name permissions"
     chown "$project_user":"$project_group" "$path_to_project"
