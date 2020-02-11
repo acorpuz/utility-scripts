@@ -3,14 +3,14 @@
 # create_project.sh
 #
 # ####################################################################
-# Description:  Script to set-up the directory structure of projects that
-#               will run on wsmilanetti.iit.uniroma1.it. 
-#               The script creates the dir structure and USER, assigns 
-#               the target directory as home to USER and set the correct
-#               permissions (2770).
-#               User is created with a default password to allow login while
-#               physically at the machine.
-#               The home directory has a link to a fast directory. 
+# Description:  Script to set-up the directory structure of projects
+#               that will run on wsmilanetti.iit.uniroma1.it.
+#               The script creates the dir structure and USER, assigns
+#               the target directory as home to USER and set the
+#               correct permissions (2770).
+#               User is created with a default password to allow login
+#               while physically at the machine.
+#               The home directory has a link to a fast directory.
 #
 # TODO: add switch to delete project/user/group
 # TODO: consider migration to Ansible
@@ -23,7 +23,7 @@
 # * Refactored script for wsmilanetti
 #
 # ####################################################################
-
+/usr/local/src
 # Load needed helper functions
 . /lib/lsb/init-functions
 
@@ -32,7 +32,7 @@ FAST_DIR_PATH="/mnt/fastdir"
 
 function showuse  {
     echo -e "Usage:\t$(basename "$0") project_name"
-    echo -e "\tPass a PROJECT_NAME to the script." 
+    echo -e "\tPass a PROJECT_NAME to the script."
     echo -e "\tThe directory /mnt/projects/PROJECT_NAME will be created as "
     echo -e "\thome directory of the user PROJECT_NAME."
 }
@@ -44,8 +44,6 @@ if [ ! $# -eq 1 ]; then
 fi
 # check for root
 if [ "$(id -u)" -eq 0 ]; then
-    
-    
     project_name="$1"
     # remove white space from name
     project_name="$(echo "${project_name}" | tr -d '[:space:]')"
@@ -68,7 +66,7 @@ if [ "$(id -u)" -eq 0 ]; then
 
     log_action_cont_msg "Creating group ${project_group} "
     addgroup "$project_group"
-    
+
     log_action_cont_msg "Adding user $project_user to system"
     # generate a random passwd
     passwd=$(pwgen 6)
@@ -80,7 +78,7 @@ if [ "$(id -u)" -eq 0 ]; then
     log_action_cont_msg "Setting up $project_name permissions"
     chown "$project_user":"$project_group" "$path_to_project"
     chmod 2770 "$path_to_project"
-    
+
     log_action_cont_msg "Creating link in ${path_to_project} to ${FAST_DIR_PATH}"
     mkdir -p "${FAST_DIR_PATH}/${project_name}"
     chown "$project_user":"$project_group" "${FAST_DIR_PATH}/${project_name}"
@@ -89,9 +87,9 @@ if [ "$(id -u)" -eq 0 ]; then
 
     # all done, report outcome
     log_action_end_msg 0
-    
+
     log_success_msg "Project ${project_name} created successfully."
-    
+
     echo "Project ${project_name} details:"
     echo -e "\t*) Project directory created in ${path_to_project}"
     echo -e "\t*) User ${project_user} added with password ${usrpass}"
