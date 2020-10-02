@@ -34,8 +34,7 @@ check_user () {
     # Needs username as only parameter
     local USR
     USR="$1"
-    getent passwd "$USR"  > /dev/null
-    if getent passwd "$USR" -eq 0; then
+    if getent passwd "$USR"; then
         #" user exists"
         echo 0
     else
